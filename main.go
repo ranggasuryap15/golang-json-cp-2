@@ -1,8 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"sort"
+	"strings"
 )
 
 type LoanData struct {
@@ -24,9 +28,16 @@ type Employee struct {
 
 // json structure
 type LoanRecord struct {
+	MonthDate string `json:"month_date"`
+	StartBalance int `json:"start_balance"`
+	EndBalance int `json:"end_balance"`
+	Borrowers []Borrower `json:"borrowers"`
 }
 
 type Borrower struct {
+	ID string `json:"id"`
+	Name string `json:"name"`
+	Total int `json:"total"`
 }
 
 func FindEmployee(id string, employees []Employee) (Employee, bool) {
@@ -83,10 +94,43 @@ func GetEndBalanceAndBorrowers(data LoanData) (int, []Borrower) {
 }
 
 func LoanReport(data LoanData) LoanRecord {
-	return LoanRecord{} // TODO: replace this
+	monthDate := ""
+	startBalance := data.StartBalance
+	
+	for _, d := range data.Data {
+		dateSplit := strings.Split(d.Date, "-")
+		monthDate = dateSplit[1] + " " + dateSplit[2]
+	}
+
+	endBalance, borrowers := GetEndBalanceAndBorrowers(data)
+
+	loanRecord := LoanRecord{
+		MonthDate: monthDate,
+		StartBalance: startBalance,
+		EndBalance: endBalance,
+		Borrowers: borrowers,
+	}
+	
+	return loanRecord // TODO: replace this
 }
 
 func RecordJSON(record LoanRecord, path string) error {
+	// open file by path
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	
+	content, err := ioutil.ReadAll(file)
+	if err != nil {
+		return err
+	}
+
+	if err := json.Unmarshal(content, &record); err != nil {
+		return err
+	}
+
 	return nil // TODO: replace this
 }
 
@@ -112,5 +156,5 @@ func main() {
 		fmt.Println(err)
 	}
 
-	fmt.Println(records)
+	fmt.Printf("%+v\n", records)
 }
