@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"sort"
 	"strings"
 )
@@ -115,22 +114,19 @@ func LoanReport(data LoanData) LoanRecord {
 }
 
 func RecordJSON(record LoanRecord, path string) error {
-	// open file by path
-	file, err := os.Open(path)
-	if err != nil {
-		return err
+	if record.StartBalance != 0 || record.EndBalance != 0 || len(record.Borrowers) != 0 {
+		jsonData, err := json.Marshal(record)
+		if err != nil {
+			return err
+		}
+
+		err = ioutil.WriteFile(path, jsonData, 0644)
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(jsonData))
 	}
-	defer file.Close()
 	
-	content, err := ioutil.ReadAll(file)
-	if err != nil {
-		return err
-	}
-
-	if err := json.Unmarshal(content, &record); err != nil {
-		return err
-	}
-
 	return nil // TODO: replace this
 }
 
@@ -150,6 +146,9 @@ func main() {
 			{"3", "Employee C", "Staff"},
 		},
 	})
+	// records := LoanReport(LoanData{
+		
+	// })
 
 	err := RecordJSON(records, "loan-records.json")
 	if err != nil {
